@@ -4,10 +4,57 @@ import requests
 app = Flask(__name__)
 SITE_NAME = 'http://18.133.31.185/'
 
+# Valid paths and methods
+VALID = {
+    'GET' : ['',
+            'hospitals', 'hospitals/<id>', 
+            'staffs', 'staffs/<id>', 'staffs/me'
+            'patients', 'patients/<id>',
+            'notes', 'notes/<id>']
+}
+
+# validate the Get method path
+def validate_get_path(path):
+    # split the path
+    path = path.split('/')
+
+    # check length of path
+    if len(path) > 2:
+        return False
+    
+    # get first part of path is valid category
+    if path[0] not in VALID['GET']:
+        return False
+    
+    # if theres a second part to the path
+    if len(path) == 2:
+
+        # handle staff separately
+        if path[0] != 'staffs':
+            # check if second part is a number
+            if not path[1].isdigit():
+                return False
+        # handle staff
+        else:
+            # check if second part is me or a number
+            if (path[1] != 'me') and (not path[1].isdigit()):
+                return False
+    
+    return True
+
 @app.route('/<path:path>',methods=['GET'])
 def proxy_get(path):
+
     # get headers
     auth = request.headers.get('Authorization')
+
+    # validate auth included
+    if not auth:
+        return Response('No Authorization header', 401)
+    
+    # check if path valid
+    if not validate_get_path(path):
+        return Response('Invalid request', 404)
 
     # makes get request to site
     resp = requests.get(f'{SITE_NAME}{path}', headers={'Authorization': auth})
