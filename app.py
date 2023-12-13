@@ -192,6 +192,22 @@ def validate_patch_content(content, path):
     
     return 200
 
+@app.route('/', methods=['GET'])
+@cache.cached(timeout=20)
+def proxy_index():
+    # makes get request to site
+    resp = requests.get(f'{SITE_NAME}')
+
+    # adds headers to the response (excluding specified)
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
+
+    # create response object
+    response = Response(resp.content, resp.status_code, headers)
+
+    return response # sends response to user
+
+
 @app.route('/<path:path>',methods=['GET'])
 @cache.cached(timeout=10)
 def proxy_get(path):
