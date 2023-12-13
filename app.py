@@ -1,8 +1,17 @@
 from flask import Flask, request, Response
+from flask_caching import Cache
 import requests
 import json
 
+config = {
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 10 # 10 seconds cache timeout
+}
+
 app = Flask(__name__)
+app.config.from_mapping(config) # load caching configs
+cache = Cache(app) # create cache object
 SITE_NAME = 'http://18.133.31.185/'
 
 # Valid paths and methods
@@ -183,7 +192,24 @@ def validate_patch_content(content, path):
     
     return 200
 
+@app.route('/', methods=['GET'])
+@cache.cached(timeout=20)
+def proxy_index():
+    # makes get request to site
+    resp = requests.get(f'{SITE_NAME}')
+
+    # adds headers to the response (excluding specified)
+    excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+    headers = [(name, value) for (name, value) in resp.raw.headers.items() if name.lower() not in excluded_headers]
+
+    # create response object
+    response = Response(resp.content, resp.status_code, headers)
+
+    return response # sends response to user
+
+
 @app.route('/<path:path>',methods=['GET'])
+@cache.cached(timeout=10)
 def proxy_get(path):
 
     # get headers
