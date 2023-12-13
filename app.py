@@ -6,7 +6,7 @@ import json
 config = {
     "DEBUG": True,          # some Flask specific configs
     "CACHE_TYPE": "simple", # Flask-Caching related configs
-    "CACHE_DEFAULT_TIMEOUT": 10 # 10 seconds cache timeout
+    "CACHE_DEFAULT_TIMEOUT": 30 # 10 seconds cache timeout
 }
 
 app = Flask(__name__)
@@ -193,7 +193,7 @@ def validate_patch_content(content, path):
     return 200
 
 @app.route('/', methods=['GET'])
-@cache.cached(timeout=20)
+@cache.cached(timeout=30)
 def proxy_index():
     # makes get request to site
     resp = requests.get(f'{SITE_NAME}')
@@ -209,7 +209,7 @@ def proxy_index():
 
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.cached(timeout=10)
+@cache.cached(timeout=30)
 def proxy_get(path):
 
     # get headers
