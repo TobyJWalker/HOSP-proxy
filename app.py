@@ -193,8 +193,8 @@ def validate_patch_content(content, path):
     return 200
 
 def log_request(request):
-    with open('log.txt.', 'a') as f:
-        f.write(request.__dict__)
+    with open('log.txt', 'a') as f:
+        f.write(str(request.__dict__))
         f.write('\n\n')
 
 @app.route('/', methods=['GET'])
