@@ -6,7 +6,7 @@ import json
 config = {
     "DEBUG": True,          # some Flask specific configs
     "CACHE_TYPE": "simple", # Flask-Caching related configs
-    "CACHE_DEFAULT_TIMEOUT": 30 # 10 seconds cache timeout
+    "CACHE_DEFAULT_TIMEOUT": 30 # 30 seconds cache timeout
 }
 
 app = Flask(__name__)
@@ -192,6 +192,11 @@ def validate_patch_content(content, path):
     
     return 200
 
+def log_request(request):
+    with open('log.txt.', 'a') as f:
+        f.write(request.__dict__)
+        f.write('\n\n')
+
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=30)
 def proxy_index():
@@ -207,10 +212,11 @@ def proxy_index():
 
     return response # sends response to user
 
-
 @app.route('/<path:path>',methods=['GET'])
 @cache.cached(timeout=30)
 def proxy_get(path):
+
+    log_request(request)
 
     # get headers
     auth = request.headers.get('Authorization')
@@ -224,7 +230,7 @@ def proxy_get(path):
         return Response('Invalid request', 404)
 
     # makes get request to site
-    resp = requests.get(f'{SITE_NAME}{path}', headers={'Authorization': auth})
+    resp = requests.get(f'{SITE_NAME}{path}', headers=request.headers)
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -249,7 +255,7 @@ def proxy_delete(path):
         return Response('Invalid request', 404)
 
     # makes get request to site
-    resp = requests.delete(f'{SITE_NAME}{path}', headers={'Authorization': auth})
+    resp = requests.delete(f'{SITE_NAME}{path}', headers=request.headers)
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -290,7 +296,7 @@ def proxy_post(path):
         return Response('Invalid Content-Type', 406)
 
     # makes get request to site
-    resp = requests.post(f'{SITE_NAME}{path}', headers={'Authorization': auth, 'Content-Type': content_type}, data=data)
+    resp = requests.post(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -331,7 +337,7 @@ def proxy_patch(path):
         return Response('Invalid Content-Type', 406)
 
     # makes get request to site
-    resp = requests.patch(f'{SITE_NAME}{path}', headers={'Authorization': auth, 'Content-Type': content_type}, data=data)
+    resp = requests.patch(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
