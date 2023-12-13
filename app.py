@@ -10,8 +10,8 @@ config = {
 }
 
 app = Flask(__name__)
-app.config.from_mapping(config) # load caching configs
-cache = Cache(app) # create cache object
+#app.config.from_mapping(config) # load caching configs
+#cache = Cache(app) # create cache object
 SITE_NAME = 'http://18.133.31.185/'
 
 # Valid paths and methods
@@ -198,7 +198,7 @@ def log_request(request):
         f.write('\n\n')
 
 @app.route('/', methods=['GET'])
-@cache.cached(timeout=30)
+#@cache.cached(timeout=30)
 def proxy_index():
     # makes get request to site
     resp = requests.get(f'{SITE_NAME}')
@@ -213,10 +213,10 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.cached(timeout=30)
+#@cache.cached(timeout=30)
 def proxy_get(path):
 
-    log_request(request)
+    #log_request(request)
 
     # get headers
     auth = request.headers.get('Authorization')
