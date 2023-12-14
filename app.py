@@ -300,10 +300,22 @@ def proxy_post(path):
         return Response('Invalid request', 404)
     elif status == 406:
         return Response('Invalid Content-Type', 406)
+    # ensure the correct staff id is added to the note 
+    if path == 'notes':
+        resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
+        try:
+            staff_data = json.loads(resp.content)
+        except: 
+            return Response('Invalid Credentials', 401)
+        post_data = json.loads(data)
+        post_data['staff_id'] = staff_data['id'] 
+        data = json.dumps(post_data)           
+
+
 
     # makes get request to site
     for i in range(3):
-        resp = requests.post(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
+        resp = requests.post(f'{SITE_NAME}{path}', headers=request.headers, data=data)
         if resp.status_code != 500:
             break
 
