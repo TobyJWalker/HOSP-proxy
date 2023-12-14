@@ -197,6 +197,14 @@ def log_request(request):
         f.write(str(request.__dict__))
         f.write('\n\n')
 
+def get_staff_id(auth):
+    resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
+    try:
+        staff_data = json.loads(resp.content)
+        return staff_data['id']
+    except:
+        return None
+
 @app.route('/', methods=['GET'])
 @cache.cached(timeout=30)
 def proxy_index():
@@ -300,18 +308,15 @@ def proxy_post(path):
         return Response('Invalid request', 404)
     elif status == 406:
         return Response('Invalid Content-Type', 406)
+    
     # ensure the correct staff id is added to the note 
     if path == 'notes':
-        resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
-        try:
-            staff_data = json.loads(resp.content)
-        except: 
+        staff_id = get_staff_id(auth)
+        if staff_id == None:
             return Response('Invalid Credentials', 401)
         post_data = json.loads(data)
-        post_data['staff_id'] = staff_data['id'] 
+        post_data['staff_id'] = staff_id 
         data = json.dumps(post_data)           
-
-
 
     # makes get request to site
     for i in range(3):
@@ -325,6 +330,41 @@ def proxy_post(path):
 
     # create response object
     response = Response(resp.content, resp.status_code, headers)
+
+    # create a note of screening data
+    if path.split('/')[-1] == 'screen':
+
+        # get the staff id related to the provided authorization
+        staff_id = get_staff_id(auth)
+        if staff_id == None:
+            return Response('Invalid Credentials', 401)
+        
+        # get patient id from path and images from post request
+        patient_id = path.split('/')[1]
+        images = json.loads(data)['images']
+
+        # get screening results
+        screen_results = json.loads(resp.content)
+
+        # create body of note
+        body = f"Overall: {screen_results['overall']},  "
+        for index, image in enumerate(images):
+            body += f"{image}: {screen_results['results'][index]}, "
+        
+        # create json data for post request
+        note_data = {
+            'title': f"Patient {patient_id} Screening",
+            'body': body[:-2],
+            'patient_id': patient_id,
+            'staff_id': staff_id
+        }
+        
+        # make notes post request
+        resp = requests.post(f'{SITE_NAME}notes', headers={'Authorization': auth, 'Content-type': 'application/json'}, data=json.dumps(note_data))
+
+        # check if request was successful
+        if resp.status_code != 201:
+            print('Screening note creation failed')
 
     return response # sends response to user
 
