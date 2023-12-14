@@ -230,7 +230,10 @@ def proxy_get(path):
         return Response('Invalid request', 404)
 
     # makes get request to site
-    resp = requests.get(f'{SITE_NAME}{path}', headers=request.headers)
+    for i in range(3):
+        resp = requests.get(f'{SITE_NAME}{path}', headers=request.headers)
+        if resp.status_code != 500:
+            break
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -255,7 +258,10 @@ def proxy_delete(path):
         return Response('Invalid request', 404)
 
     # makes get request to site
-    resp = requests.delete(f'{SITE_NAME}{path}', headers=request.headers)
+    for i in range(3):
+        resp = requests.delete(f'{SITE_NAME}{path}', headers=request.headers)
+        if resp.status_code != 500:
+            break
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -296,7 +302,10 @@ def proxy_post(path):
         return Response('Invalid Content-Type', 406)
 
     # makes get request to site
-    resp = requests.post(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
+    for i in range(3):
+        resp = requests.post(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
+        if resp.status_code != 500:
+            break
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
@@ -337,7 +346,10 @@ def proxy_patch(path):
         return Response('Invalid Content-Type', 406)
 
     # makes get request to site
-    resp = requests.patch(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
+    for i in range(3):  
+        resp = requests.patch(f'{SITE_NAME}{path}', headers=request.headers, data=request.data)
+        if resp.status_code != 500:
+            break
 
     # adds headers to the response (excluding specified)
     excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
