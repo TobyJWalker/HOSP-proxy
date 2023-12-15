@@ -1,17 +1,8 @@
 from flask import Flask, request, Response
-from flask_caching import Cache
 import requests
 import json
 
-config = {
-    "DEBUG": True,          # some Flask specific configs
-    "CACHE_TYPE": "simple", # Flask-Caching related configs
-    "CACHE_DEFAULT_TIMEOUT": 30 # 30 seconds cache timeout
-}
-
 app = Flask(__name__)
-app.config.from_mapping(config) # load caching configs
-cache = Cache(app) # create cache object
 SITE_NAME = 'http://18.133.31.185/'
 
 # Valid paths and methods
@@ -206,7 +197,6 @@ def get_staff_id(auth):
         return None
 
 @app.route('/', methods=['GET'])
-@cache.cached(timeout=30)
 def proxy_index():
     # makes get request to site
     resp = requests.get(f'{SITE_NAME}')
@@ -221,7 +211,6 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.cached(timeout=30)
 def proxy_get(path):
 
     #log_request(request)
