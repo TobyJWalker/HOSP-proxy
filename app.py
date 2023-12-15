@@ -192,16 +192,24 @@ def validate_patch_content(content, path):
     
     return 200
 
-def log_request(request):
-    with open('log.txt', 'a') as f:
-        f.write(str(request.__dict__))
-        f.write('\n\n')
+
+
+def log(event):
+    requests.post('https://pg9t2w92n4.execute-api.eu-west-2.amazonaws.com/blip-logging', data=event)
 
 def get_staff_id(auth):
     resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
     try:
         staff_data = json.loads(resp.content)
         return staff_data['id']
+    except:
+        return None
+    
+def get_staff_name(auth):
+    resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
+    try:
+        staff_data = json.loads(resp.content)
+        return staff_data['name']
     except:
         return None
 
@@ -223,8 +231,6 @@ def proxy_index():
 @app.route('/<path:path>',methods=['GET'])
 @cache.cached(timeout=30)
 def proxy_get(path):
-
-    #log_request(request)
 
     # get headers
     auth = request.headers.get('Authorization')
@@ -249,6 +255,13 @@ def proxy_get(path):
 
     # create response object
     response = Response(resp.content, resp.status_code, headers)
+
+    #log_request
+    staff_name = get_staff_name(auth)
+    if staff_name == None:
+        return Response('Invalid Credentials', 401)
+    log_string = f"{staff_name} requested to view {path}"
+    log(log_string)
 
     return response # sends response to user
 
@@ -277,6 +290,20 @@ def proxy_delete(path):
 
     # create response object
     response = Response(resp.content, resp.status_code, headers)
+
+    #log_request
+    staff_name = get_staff_name(auth)
+    if staff_name == None:
+        return Response('Invalid Credentials', 401)
+    try:
+        json.loads(resp.content)
+        log_string = f"{staff_name} deleted {path}"
+    except:
+        log_string = f"{staff_name} attempted to delete {path}"
+    
+    log(log_string)
+    
+
 
     return response # sends response to user
 
@@ -366,6 +393,19 @@ def proxy_post(path):
         if resp.status_code != 201:
             print('Screening note creation failed')
 
+    #log_request
+    staff_name = get_staff_name(auth)
+    if staff_name == None:
+        return Response('Invalid Credentials', 401)
+    content = json.loads(resp.content)
+    if path.split('/')[-1] == 'screen':
+        log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
+    else:
+        log_string = f"{staff_name} created {path} {content['id']}"
+        
+    log(log_string)
+
+
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['PATCH'])
@@ -410,7 +450,23 @@ def proxy_patch(path):
     # create response object
     response = Response(resp.content, resp.status_code, headers)
 
+
+    #log_request
+    staff_name = get_staff_name(auth)
+    if staff_name == None:
+        return Response('Invalid Credentials', 401)
+    try:
+        content = json.loads(resp.content)
+        log_string = f"{staff_name} updated {path}"
+    except:
+        log_string = f"{staff_name} attempted to update {path}"
+    
+    log(log_string)
+        
+
     return response # sends response to user
+
+
 
 
 
