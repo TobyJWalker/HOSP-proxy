@@ -386,14 +386,16 @@ def proxy_post(path):
     staff_name = get_staff_name(auth)
     if staff_name == None:
         return Response('Invalid Credentials', 401)
-    content = json.loads(resp.content)
-    if path.split('/')[-1] == 'screen':
-        log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
-    else:
-        log_string = f"{staff_name} created {path} {content['id']}"
-        
-    log(log_string)
-
+    try:
+        content = json.loads(resp.content)
+        if path.split('/')[-1] == 'screen':
+            log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
+        else:
+            log_string = f"{staff_name} created {path} {content['id']}"
+            
+        log(log_string)
+    except:
+        return response
 
     return response # sends response to user
 
@@ -438,7 +440,6 @@ def proxy_patch(path):
 
     # create response object
     response = Response(resp.content, resp.status_code, headers)
-
 
     #log_request
     staff_name = get_staff_name(auth)
