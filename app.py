@@ -376,10 +376,10 @@ def proxy_post(path):
         }
         
         # make notes post request
-        resp = requests.post(f'{SITE_NAME}notes', headers={'Authorization': auth, 'Content-type': 'application/json'}, data=json.dumps(note_data))
+        resp_notes = requests.post(f'{SITE_NAME}notes', headers={'Authorization': auth, 'Content-type': 'application/json'}, data=json.dumps(note_data))
 
         # check if request was successful
-        if resp.status_code != 201:
+        if resp_notes.status_code != 201:
             print('Screening note creation failed')
 
     #log_request
@@ -395,8 +395,7 @@ def proxy_post(path):
             
         log(log_string)
     except:
-        print(f"Formatted string: {resp.content}")
-        #return response
+        return response
 
     return response # sends response to user
 
