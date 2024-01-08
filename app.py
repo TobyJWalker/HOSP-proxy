@@ -395,7 +395,8 @@ def proxy_post(path):
             
         log(log_string)
     except:
-        return response
+        print(f"Formatted string: {resp.content}")
+        #return response
 
     return response # sends response to user
 
