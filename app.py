@@ -1,9 +1,19 @@
 from flask import Flask, request, Response
+from flask_caching import Cache
 import requests
 import json
 
+config = {
+    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+}
+
 app = Flask(__name__)
 SITE_NAME = 'http://18.133.31.185/'
+
+# load config and create cache
+app.config.from_mapping(config)
+cache = Cache(app)
 
 # Valid paths and methods
 VALID = {
@@ -183,7 +193,12 @@ def validate_patch_content(content, path):
     
     return 200
 
-
+# checks a response for a 500 error
+def check_500(resp):
+    if resp.status_code in [400, 401, 403, 404, 405, 406, 500, 503]:
+        return False
+    else:
+        return True
 
 def log(event):
     requests.post('https://pg9t2w92n4.execute-api.eu-west-2.amazonaws.com/blip-logging', data=event)
@@ -219,6 +234,7 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
+@cache.memoize(timeout=30, response_filter=check_500) # cache the response if it is not an error for 30 seconds
 def proxy_get(path):
 
     # get headers
