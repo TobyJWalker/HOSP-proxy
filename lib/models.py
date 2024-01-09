@@ -14,6 +14,4 @@ class Authorisation(peewee.Model):
         database = db
         table_name = 'authorisation'
 
-# function to create tables
-def create_tables():
-    db.create_tables([Authorisation], safe=True)
+db.create_tables([Authorisation]) # create table if not exists
