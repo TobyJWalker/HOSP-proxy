@@ -1,5 +1,7 @@
 from flask import Flask, request, Response
 from flask_caching import Cache
+from lib.models import *
+from hashlib import sha256
 import requests
 import json
 
@@ -218,6 +220,42 @@ def get_staff_name(auth):
         return staff_data['name']
     except:
         return None
+    
+
+@app.before_request
+def before_request():
+    
+    # check header is existing
+    auth = request.headers.get('Authorization')
+
+    # validate auth included
+    if not auth:
+        return Response('No Authorization header', 401)
+    
+    # hash auth value if in request
+    enc_auth = sha256(auth.encode()).hexdigest()
+    
+    # check if auth is in database
+    try:
+        entry = Authorisation.get(Authorisation.header == enc_auth)
+
+        # check if expired
+        if entry.date_added < (datetime.datetime.now() - datetime.timedelta(hours=8)):
+            if get_staff_id(auth) == None:
+                return Response('Invalid Credentials', 401)
+            else:
+                # update time
+                entry.date_added = datetime.datetime.now()
+                entry.save()
+
+    # if not in database
+    except:
+        # check if staff
+        if get_staff_id(auth) == None:
+            return Response('Invalid Credentials', 401)
+        
+        # add to database
+        Authorisation.create(header=enc_auth)
 
 @app.route('/', methods=['GET'])
 def proxy_index():
@@ -308,8 +346,6 @@ def proxy_delete(path):
     
     log(log_string)
     
-
-
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['POST'])
@@ -469,7 +505,6 @@ def proxy_patch(path):
     
     log(log_string)
         
-
     return response # sends response to user
 
 
