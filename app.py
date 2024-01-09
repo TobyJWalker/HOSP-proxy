@@ -272,7 +272,7 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.memoize(timeout=30, response_filter=check_500) # cache the response if it is not an error for 30 seconds
+@cache.memoize(timeout=60, response_filter=check_500) # cache the response if it is not an error for 30 seconds
 def proxy_get(path):
 
     # get headers
