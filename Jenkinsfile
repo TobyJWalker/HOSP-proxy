@@ -12,14 +12,6 @@ pipeline {
                 git branch: 'main', credentialsId: env.GIT_CREDENTIALS, url: 'https://github.com/TobyJWalker/HOSP-Proxy.git'
             }
         }
-
-        stage('Docker Build') {
-            steps {
-                sh '''
-                    docker build -t proxy .
-                '''
-            }
-        }
         
         stage('Docker Stop') {
             steps {
@@ -32,7 +24,8 @@ pipeline {
         stage('Docker Run') {
             steps {
                 sh '''
-                    docker run -d -p 80:5001 proxy
+                    docker-compose up --force-recreate --build -d
+                    docker image prune -f
                 '''
             }
         }
