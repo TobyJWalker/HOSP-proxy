@@ -7,7 +7,8 @@ import requests
 import json
 
 config = {
-    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "CACHE_TYPE": "FileSystemCache",  # Flask-Caching related configs
+    "CACHE_DIR": "data",
     "CACHE_DEFAULT_TIMEOUT": 300
 }
 
@@ -276,7 +277,7 @@ def before_request():
             entry = Authorisation.get(Authorisation.header == enc_auth)
 
             # check if expired
-            if entry.date_added < (datetime.datetime.now() - datetime.timedelta(hours=8)):
+            if entry.date_added < (datetime.datetime.now() - datetime.timedelta(hours=12)):
                 if get_staff_id(auth) == None:
                     return Response('Invalid Credentials', 401)
                 else:
