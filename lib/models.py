@@ -1,8 +1,13 @@
 import peewee
 import datetime
+import os
+
+# make data folder if not existing
+if not os.path.exists('data'):
+    os.makedirs('data')
 
 # connect to the database file
-db = peewee.SqliteDatabase('database.sqlite')
+db = peewee.SqliteDatabase('data/database.sqlite')
 
 # create authorisation table based on Peewee Model
 class Authorisation(peewee.Model):
