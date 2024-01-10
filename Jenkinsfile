@@ -13,14 +13,6 @@ pipeline {
             }
         }
         
-        stage('Docker Stop') {
-            steps {
-                sh '''
-                    docker stop $(docker ps -a -q)
-                '''
-            }
-        }
-        
         stage('Docker Run') {
             steps {
                 sh '''
