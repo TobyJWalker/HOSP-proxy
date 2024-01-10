@@ -2,6 +2,7 @@ from flask import Flask, request, Response
 from flask_caching import Cache
 from lib.models import *
 from hashlib import sha256
+from threading import Thread
 import requests
 import json
 
@@ -221,6 +222,39 @@ def get_staff_name(auth):
     except:
         return None
     
+def note_screening_results(auth, path, data, resp):
+        # get the staff id related to the provided authorization
+        staff_id = get_staff_id(auth)
+        if staff_id == None:
+            return Response('Invalid Credentials', 401)
+        
+        # get patient id from path and images from post request
+        patient_id = path.split('/')[1]
+        images = json.loads(data)['images']
+
+        # get screening results
+        screen_results = json.loads(resp.content)
+
+        # create body of note
+        body = f"Overall: {screen_results['overall']},  "
+        for index, image in enumerate(images):
+            body += f"{image}: {screen_results['results'][index]}, "
+        
+        # create json data for post request
+        note_data = {
+            'title': f"Patient {patient_id} Screening",
+            'body': body[:-2],
+            'patient_id': patient_id,
+            'staff_id': staff_id
+        }
+        
+        # make notes post request
+        resp_notes = requests.post(f'{SITE_NAME}notes', headers={'Authorization': auth, 'Content-type': 'application/json'}, data=json.dumps(note_data))
+
+        # check if request was successful
+        if resp_notes.status_code != 201:
+            print('Screening note creation failed')
+    
 
 @app.before_request
 def before_request():
@@ -403,38 +437,7 @@ def proxy_post(path):
 
     # create a note of screening data
     if path.split('/')[-1] == 'screen':
-
-        # get the staff id related to the provided authorization
-        staff_id = get_staff_id(auth)
-        if staff_id == None:
-            return Response('Invalid Credentials', 401)
-        
-        # get patient id from path and images from post request
-        patient_id = path.split('/')[1]
-        images = json.loads(data)['images']
-
-        # get screening results
-        screen_results = json.loads(resp.content)
-
-        # create body of note
-        body = f"Overall: {screen_results['overall']},  "
-        for index, image in enumerate(images):
-            body += f"{image}: {screen_results['results'][index]}, "
-        
-        # create json data for post request
-        note_data = {
-            'title': f"Patient {patient_id} Screening",
-            'body': body[:-2],
-            'patient_id': patient_id,
-            'staff_id': staff_id
-        }
-        
-        # make notes post request
-        resp_notes = requests.post(f'{SITE_NAME}notes', headers={'Authorization': auth, 'Content-type': 'application/json'}, data=json.dumps(note_data))
-
-        # check if request was successful
-        if resp_notes.status_code != 201:
-            print('Screening note creation failed')
+        Thread(target=note_screening_results, args=(auth, path, data, resp)).start()
 
     #log_request
     staff_name = get_staff_name(auth)
