@@ -1,7 +1,5 @@
 from flask import Flask, request, Response
 from flask_caching import Cache
-from lib.models import *
-from hashlib import sha256
 import requests
 import json
 
@@ -221,43 +219,11 @@ def get_staff_name(auth):
         return staff_data['name']
     except:
         return None
-
-# @app.before_request
-# def before_request():
-
-#     # dont require auth if path is index
-#     if request.path != '/':
-#         # check header is existing
-#         auth = request.headers.get('Authorization')
-
-#         # validate auth included
-#         if not auth:
-#             return Response('No Authorization header', 401)
-        
-#         # hash auth value if in request
-#         enc_auth = sha256(auth.encode()).hexdigest()
-        
-#         # check if auth is in database
-#         try:
-#             entry = Authorisation.get(Authorisation.header == enc_auth)
-
-#             # check if expired
-#             if entry.date_added < (datetime.datetime.now() - datetime.timedelta(hours=12)):
-#                 if get_staff_id(auth) == None:
-#                     return Response('Invalid Credentials', 401)
-#                 else:
-#                     # update time
-#                     entry.date_added = datetime.datetime.now()
-#                     entry.save()
-
-#         # if not in database
-#         except:
-#             # check if staff
-#             if get_staff_id(auth) == None:
-#                 return Response('Invalid Credentials', 401)
-            
-#             # add to database
-#             Authorisation.create(header=enc_auth)
+    
+# make a cache key to incorporate the authorisation header
+def make_key(path):
+    auth_head = request.headers.get('Authorization', '')
+    return f"{request.path}:{auth_head}" # return formulated cache key
 
 @app.route('/', methods=['GET'])
 def proxy_index():
@@ -274,7 +240,7 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.memoize(timeout=60, response_filter=check_500) # cache the response if it is not an error for 30 seconds
+@cache.cached(timeout=120, response_filter=check_500, make_cache_key=make_key) # cache the response if it is not an error for 30 seconds
 def proxy_get(path):
 
     # get headers
