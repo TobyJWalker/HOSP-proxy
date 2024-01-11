@@ -230,6 +230,7 @@ def get_staff_name(auth):
         # splitting the auth string into username and password
         username = decoded_auth.split(':')[0]
     except:
+        print(convertedbytes)
         username = None
 
     return username if username != '' or username.isspace() else None
