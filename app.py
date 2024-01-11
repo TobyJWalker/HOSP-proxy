@@ -219,18 +219,20 @@ def get_staff_id(auth):
     
 # get staff name from auth string
 def get_staff_name(auth):
-    # converting the base64 code into ascii characters
-    convertbytes = auth.encode("ascii")
-    # converting into bytes from base64 system
-    convertedbytes = base64.b64decode(convertbytes)
-    # decoding the auth string
-    decoded_auth = convertedbytes.decode("ascii")
+    try:
+        # converting the base64 code into ascii characters
+        convertbytes = auth.encode("utf-8")
+        # converting into bytes from base64 system
+        convertedbytes = base64.b64decode(convertbytes)
+        # decoding the auth string
+        decoded_auth = convertedbytes.decode("utf-8")
 
-    # splitting the auth string into username and password
-    username = decoded_auth.split(':')[0]
+        # splitting the auth string into username and password
+        username = decoded_auth.split(':')[0]
+    except:
+        username = None
 
     return username if username != '' or username.isspace() else None
-    
     
 # make a cache key to incorporate the authorisation header
 def make_key(path):
