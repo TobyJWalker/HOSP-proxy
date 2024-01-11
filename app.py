@@ -282,10 +282,13 @@ def proxy_get(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    if resp.status_code in [200, 201]:
-        staff_name = get_staff_name(auth)
-        log_string = f"{staff_name} requested to view {path}"
-        log(log_string)
+    try:
+        if resp.status_code in [200, 201]:
+            staff_name = get_staff_name(auth)
+            log_string = f"{staff_name} requested to view {path}"
+            log(log_string)
+    except:
+        pass
 
     return response # sends response to user
 
@@ -316,15 +319,18 @@ def proxy_delete(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    if resp.status_code in [200, 201]:
-        staff_name = get_staff_name(auth)
-        try:
-            json.loads(resp.content)
-            log_string = f"{staff_name} deleted {path}"
-        except:
-            log_string = f"{staff_name} attempted to delete {path}"
-    
-        log(log_string)
+    try:
+        if resp.status_code in [200, 201]:
+            staff_name = get_staff_name(auth)
+            try:
+                json.loads(resp.content)
+                log_string = f"{staff_name} deleted {path}"
+            except:
+                log_string = f"{staff_name} attempted to delete {path}"
+        
+            log(log_string)
+    except:
+        pass
     
     return response # sends response to user
 
@@ -414,18 +420,21 @@ def proxy_post(path):
             print('Screening note creation failed')
 
     #log_request
-    if resp.status_code in [200, 201]:
-        staff_name = get_staff_name(auth)
-        try:
-            content = json.loads(resp.content)
-            if path.split('/')[-1] == 'screen':
-                log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
-            else:
-                log_string = f"{staff_name} created {path} {content['id']}"
-                
-            log(log_string)
-        except:
-            return response
+    try:
+        if resp.status_code in [200, 201]:
+            staff_name = get_staff_name(auth)
+            try:
+                content = json.loads(resp.content)
+                if path.split('/')[-1] == 'screen':
+                    log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
+                else:
+                    log_string = f"{staff_name} created {path} {content['id']}"
+                    
+                log(log_string)
+            except:
+                return response
+    except:
+        pass
 
     return response # sends response to user
 
@@ -472,15 +481,18 @@ def proxy_patch(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    if resp.status_code in [200, 201]:
-        staff_name = get_staff_name(auth)
-        try:
-            content = json.loads(resp.content)
-            log_string = f"{staff_name} updated {path}"
-        except:
-            log_string = f"{staff_name} attempted to update {path}"
-        
-        log(log_string)
+    try:
+        if resp.status_code in [200, 201]:
+            staff_name = get_staff_name(auth)
+            try:
+                content = json.loads(resp.content)
+                log_string = f"{staff_name} updated {path}"
+            except:
+                log_string = f"{staff_name} attempted to update {path}"
+            
+            log(log_string)
+    except:
+        pass
         
     return response # sends response to user
 
