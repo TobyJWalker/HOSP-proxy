@@ -1,10 +1,16 @@
 from flask import Flask, request, Response
 from flask_caching import Cache
+import base64
 import requests
 import json
+import redis
 
 config = {
-    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "CACHE_TYPE": "RedisCache",  # Flask-Caching related configs
+    "CACHE_REDIS_HOST": "redis",
+    "CACHE_REDIS_PORT": 6379,
+    "CACHE_REDIS_DB": 0,
+    "CACHE_REDIS_URL": "redis://redis:6379/0",
     "CACHE_DEFAULT_TIMEOUT": 300
 }
 
@@ -211,13 +217,20 @@ def get_staff_id(auth):
     except:
         return None
     
+# get staff name from auth string
 def get_staff_name(auth):
-    resp = requests.get(f'{SITE_NAME}staffs/me', headers={'Authorization': auth})
-    try:
-        staff_data = json.loads(resp.content)
-        return staff_data['name']
-    except:
-        return None
+    # converting the base64 code into ascii characters
+    convertbytes = auth.encode("ascii")
+    # converting into bytes from base64 system
+    convertedbytes = base64.b64decode(convertbytes)
+    # decoding the auth string
+    decoded_auth = convertedbytes.decode("ascii")
+
+    # splitting the auth string into username and password
+    username = decoded_auth.split(':')[0]
+
+    return username if username != '' or username.isspace() else None
+    
     
 # make a cache key to incorporate the authorisation header
 def make_key(path):
@@ -239,7 +252,7 @@ def proxy_index():
     return response # sends response to user
 
 @app.route('/<path:path>',methods=['GET'])
-@cache.cached(timeout=120, response_filter=check_500, make_cache_key=make_key) # cache the response if it is not an error for 30 seconds
+@cache.cached(timeout=300, response_filter=check_500, make_cache_key=make_key) # cache the response if it is not an error for 30 seconds
 def proxy_get(path):
 
     # get headers
@@ -267,11 +280,10 @@ def proxy_get(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    staff_name = get_staff_name(auth)
-    if staff_name == None:
-        return Response('Invalid Credentials', 401)
-    log_string = f"{staff_name} requested to view {path}"
-    log(log_string)
+    if resp.status_code in [200, 201]:
+        staff_name = get_staff_name(auth)
+        log_string = f"{staff_name} requested to view {path}"
+        log(log_string)
 
     return response # sends response to user
 
@@ -302,16 +314,15 @@ def proxy_delete(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    staff_name = get_staff_name(auth)
-    if staff_name == None:
-        return Response('Invalid Credentials', 401)
-    try:
-        json.loads(resp.content)
-        log_string = f"{staff_name} deleted {path}"
-    except:
-        log_string = f"{staff_name} attempted to delete {path}"
+    if resp.status_code in [200, 201]:
+        staff_name = get_staff_name(auth)
+        try:
+            json.loads(resp.content)
+            log_string = f"{staff_name} deleted {path}"
+        except:
+            log_string = f"{staff_name} attempted to delete {path}"
     
-    log(log_string)
+        log(log_string)
     
     return response # sends response to user
 
@@ -401,19 +412,18 @@ def proxy_post(path):
             print('Screening note creation failed')
 
     #log_request
-    staff_name = get_staff_name(auth)
-    if staff_name == None:
-        return Response('Invalid Credentials', 401)
-    try:
-        content = json.loads(resp.content)
-        if path.split('/')[-1] == 'screen':
-            log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
-        else:
-            log_string = f"{staff_name} created {path} {content['id']}"
-            
-        log(log_string)
-    except:
-        return response
+    if resp.status_code in [200, 201]:
+        staff_name = get_staff_name(auth)
+        try:
+            content = json.loads(resp.content)
+            if path.split('/')[-1] == 'screen':
+                log_string = f"{staff_name} created a screening for patient {path.split('/')[1]}"
+            else:
+                log_string = f"{staff_name} created {path} {content['id']}"
+                
+            log(log_string)
+        except:
+            return response
 
     return response # sends response to user
 
@@ -460,16 +470,15 @@ def proxy_patch(path):
     response = Response(resp.content, resp.status_code, headers)
 
     #log_request
-    staff_name = get_staff_name(auth)
-    if staff_name == None:
-        return Response('Invalid Credentials', 401)
-    try:
-        content = json.loads(resp.content)
-        log_string = f"{staff_name} updated {path}"
-    except:
-        log_string = f"{staff_name} attempted to update {path}"
-    
-    log(log_string)
+    if resp.status_code in [200, 201]:
+        staff_name = get_staff_name(auth)
+        try:
+            content = json.loads(resp.content)
+            log_string = f"{staff_name} updated {path}"
+        except:
+            log_string = f"{staff_name} attempted to update {path}"
+        
+        log(log_string)
         
     return response # sends response to user
 
