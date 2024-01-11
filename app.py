@@ -224,13 +224,13 @@ def get_staff_name(auth):
         convertbytes = auth.encode("utf-8")
         # converting into bytes from base64 system
         convertedbytes = base64.b64decode(convertbytes)
+        print(convertedbytes)
         # decoding the auth string
         decoded_auth = convertedbytes.decode("utf-8")
 
         # splitting the auth string into username and password
         username = decoded_auth.split(':')[0]
     except:
-        print(convertedbytes)
         username = None
 
     return username if username != '' or username.isspace() else None
