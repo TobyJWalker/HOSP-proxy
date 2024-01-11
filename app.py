@@ -220,11 +220,13 @@ def get_staff_id(auth):
 # get staff name from auth string
 def get_staff_name(auth):
     try:
+        # get rid of basic in auth header
+        auth = auth.replace('Basic ', '')
+
         # converting the base64 code into ascii characters
         convertbytes = auth.encode("utf-8")
         # converting into bytes from base64 system
         convertedbytes = base64.b64decode(convertbytes)
-        print(convertedbytes)
         # decoding the auth string
         decoded_auth = convertedbytes.decode("utf-8")
 
