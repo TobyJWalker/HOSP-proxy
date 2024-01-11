@@ -8,6 +8,7 @@ flask = "*"
 requests = "*"
 flask-caching = "*"
 peewee = "*"
+redis = "*"
 
 [dev-packages]
 
