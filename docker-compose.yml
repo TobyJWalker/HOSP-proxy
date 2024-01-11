@@ -6,5 +6,8 @@ services:
     container_name: flask_proxy
     ports:
       - "80:5001"
-    volumes:
-      - ./data:/data
+  redis:
+    image: redis
+    container_name: redis-container
+    ports:
+      - "6379:6379"
